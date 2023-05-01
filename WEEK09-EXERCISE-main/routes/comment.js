@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Get comment
 router.get('/:blogId/comments', function(req, res, next){
-    
+     console.log(req.params.comments)
 });
 
 // Create new comment
