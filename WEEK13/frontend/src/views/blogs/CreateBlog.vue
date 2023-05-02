@@ -33,7 +33,7 @@
               </figure>
             </div>
             <footer class="card-footer">
-              <a @click="consteSelectImage(index)" class="card-footer-item has-text-danger">Delete</a>
+              <a @click="deleteSelectImage(index, image)" class="card-footer-item has-text-danger">Delete</a>
             </footer>
           </div>
         </div>
@@ -139,7 +139,7 @@
 import axios from "axios";
 import { required, minLength, maxLength,sameAs,url} from 'vuelidate/lib/validators'
 function titleWrong (value) {
-  if (!(value.match(/^[a-zA-Z\s/]+$/))) {
+  if (!(value.match(/^[a-zA-Z]+$/))) {
      return false
    }
 
@@ -220,24 +220,32 @@ export default {
   methods: {
     selectImages(event) {
       this.images = event.target.files;
-      this.imageSize = this.images[0].size
-      console.log(typeof(this.images[0].size))
+      this.images.forEach((val) => {
+        this.imageSize += val.size
+      })
+      // this.$v.imageSize.$touch()
     },
     showSelectImage(image) {
       // for preview only
       return URL.createObjectURL(image);
     },
-    deleteSelectImage(index) {
+    deleteSelectImage(index, image) {
       console.log(this.images);
       this.images = Array.from(this.images);
       this.images.splice(index, 1);
+      this.imageSize -= image.size
+      // this.$v.imageSize.$touch()
+      
       
     },
     submitBlog() {
 
-      this.$v.$touch();
-    if (!this.$v.$invalid) {
-      const formData = new FormData();
+           // Validate all fields
+           this.$v.$touch();
+
+// เช็คว่าในฟอร์มไม่มี error
+if (!this.$v.$invalid) {
+      let formData = new FormData();
       formData.append("title", this.titleBlog);
       formData.append("content", this.contentBlog);
       formData.append("pinned", this.pinnedBlog ? 1 : 0);
@@ -247,15 +255,7 @@ export default {
       formData.append("status", this.statusBlog);
       this.images.forEach((image) => {
         formData.append("myImage", image);
-      })
-
-
-      axios
-        .post("http://localhost:3000/blogs", formData)
-        .then((res) => this.$router.push({name: 'home'}))
-        .catch((e) => console.log(e.response.data));
-
-    }
+      });
 
       // Note ***************
       // ตอนเรายิง Postmant จะใช้ fromData
@@ -271,7 +271,11 @@ export default {
       // จะสังเกตุว่าใช้ myImage เป็น key เดียวกัน เลยต้องเอามา loop forEach
       // พอไปฝั่ง backend มันจะจัด file ให้เป็น Array เพื่อเอาไปใช้งานต่อได้
 
-    
+      axios
+        .post("http://localhost:3000/blogs", formData)
+        .then((res) => this.$router.push({name: 'home'}))
+        .catch((e) => console.log(e.response.data));
+    }
     },
   },
 };
